@@ -31,6 +31,9 @@ elements.list.addEventListener("click", (event) => {
   if (!trigger) return;
 
   const nextId = trigger.dataset.danceId;
+  const dance = state.dances.find((item) => item.id === nextId);
+  if (!dance?.videoId) return;
+
   state.activeId = state.activeId === nextId ? "" : nextId;
   renderList();
 });
@@ -199,7 +202,7 @@ function renderList() {
 
 function renderDance(dance) {
   const isActive = dance.id === state.activeId;
-  const videoLabel = dance.videoId ? "Inline video" : "Missing video";
+  const hasVideo = Boolean(dance.videoId);
   const extraFields = dance.fields
     .map((field) => {
       return `<span class="field-pill">${escapeHtml(field.header)}: ${escapeHtml(
@@ -207,25 +210,25 @@ function renderDance(dance) {
       )}</span>`;
     })
     .join("");
+  const statusChip = hasVideo ? "" : `<span class="row-status">No link yet</span>`;
+  const subline = [statusChip, extraFields].filter(Boolean).join("");
 
   return `
-    <article class="dance-row ${isActive ? "is-active" : ""}">
+    <article class="dance-row ${isActive ? "is-active" : ""} ${hasVideo ? "has-video" : "is-empty"}">
       <button
         class="dance-summary"
         type="button"
-        data-dance-id="${escapeHtml(dance.id)}"
+        ${hasVideo ? `data-dance-id="${escapeHtml(dance.id)}"` : ""}
         aria-expanded="${isActive ? "true" : "false"}"
+        ${hasVideo ? "" : "disabled"}
       >
         <span class="row-number">${String(dance.number).padStart(2, "0")}</span>
         <span class="row-copy">
           <span class="row-title">${escapeHtml(dance.title)}</span>
-          <span class="row-subline">
-            <span>${videoLabel}</span>
-            ${extraFields}
-          </span>
+          ${subline ? `<span class="row-subline">${subline}</span>` : ""}
         </span>
         <span class="row-action" aria-hidden="true">
-          <i data-lucide="${isActive ? "pause" : "play"}"></i>
+          <i data-lucide="${hasVideo ? (isActive ? "pause" : "play") : "minus"}"></i>
         </span>
       </button>
       ${isActive ? renderVideoPanel(dance) : ""}
@@ -267,8 +270,9 @@ function renderVideoPanel(dance) {
 function updateStats() {
   const visible = state.filtered.length;
   const total = state.dances.length;
+  const ready = state.filtered.filter((dance) => dance.videoId).length;
   elements.stats.textContent =
-    visible === total ? `${total} dances` : `${visible} of ${total}`;
+    visible === total ? `${ready}/${total} ready` : `${visible} shown`;
 }
 
 function setStatus(message) {

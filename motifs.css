@@ -1,0 +1,146 @@
+:root {
+  --dye-paper: #f7e6c6;
+  --dye-paper-soft: #fff6e4;
+  --dye-paper-aged: #e4c58e;
+  --dye-ink: #24160f;
+  --dye-iron: #463024;
+  --dye-madder: #7d251d;
+  --dye-rust: #aa4b28;
+  --dye-indigo: #123e54;
+  --dye-indigo-deep: #0c2a3a;
+  --dye-turmeric: #c88b27;
+  --dye-mustard: #dfb34d;
+  --dye-leaf: #4c6738;
+  --dye-olive: #73733b;
+  --dye-clay: #b8683f;
+  --dye-smoke: #837263;
+  --dye-ash: #b9aa96;
+}
+
+.handloom-page {
+  --grain-color: rgba(70, 48, 36, 0.13);
+  background:
+    radial-gradient(circle at 18px 18px, var(--grain-color) 0 1px, transparent 1.8px) 0 0 / 38px 38px,
+    radial-gradient(circle at 34px 9px, rgba(125, 37, 29, 0.1) 0 1px, transparent 1.7px) 0 0 / 56px 42px,
+    linear-gradient(120deg, rgba(255, 246, 228, 0.92), rgba(228, 197, 142, 0.32)),
+    var(--dye-paper);
+}
+
+.block-band {
+  background:
+    radial-gradient(ellipse at 18px 13px, var(--dye-mustard) 0 3px, transparent 3.5px) 0 0 / 42px 28px,
+    radial-gradient(ellipse at 34px 17px, rgba(255, 246, 228, 0.18) 0 3px, transparent 3.5px) 0 0 / 42px 28px,
+    conic-gradient(from 45deg at 50% 48%, transparent 0 22%, rgba(255, 246, 228, 0.18) 22% 26%, transparent 26% 50%, rgba(36, 22, 15, 0.16) 50% 55%, transparent 55%) 0 0 / 76px 76px,
+    linear-gradient(135deg, rgba(125, 37, 29, 0.98), rgba(84, 38, 25, 0.96) 42%, rgba(18, 62, 84, 0.96));
+}
+
+.block-band::before,
+.block-band::after {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 0;
+  height: 22px;
+  content: "";
+  background:
+    radial-gradient(circle at 10px 50%, var(--dye-paper-soft) 0 2px, transparent 2.5px) 0 0 / 22px 100%,
+    radial-gradient(ellipse at 11px 50%, var(--dye-indigo-deep) 0 7px, transparent 7.5px) 0 0 / 44px 100%,
+    linear-gradient(90deg, var(--dye-rust), var(--dye-turmeric), var(--dye-leaf), var(--dye-indigo), var(--dye-rust));
+  opacity: 0.96;
+}
+
+.block-band::before {
+  top: 0;
+}
+
+.block-band::after {
+  bottom: 0;
+  transform: rotate(180deg);
+}
+
+.stamped-panel {
+  background:
+    linear-gradient(90deg, rgba(125, 37, 29, 0.06), transparent 34%),
+    radial-gradient(circle at 20px 20px, rgba(200, 139, 39, 0.12) 0 2px, transparent 2.4px) 0 0 / 40px 40px,
+    rgba(255, 246, 228, 0.88);
+}
+
+.stamped-panel::before {
+  display: block;
+  height: 10px;
+  content: "";
+  background:
+    radial-gradient(circle at 8px 50%, var(--dye-paper-soft) 0 2px, transparent 2.6px) 0 0 / 20px 100%,
+    linear-gradient(90deg, var(--dye-madder), var(--dye-clay), var(--dye-turmeric), var(--dye-leaf), var(--dye-indigo));
+}
+
+.motif-field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.motif-paisley,
+.motif-rosette {
+  position: absolute;
+  display: block;
+  opacity: 0.36;
+  mix-blend-mode: screen;
+}
+
+.motif-paisley {
+  width: 104px;
+  height: 136px;
+  border: 2px solid rgba(255, 246, 228, 0.34);
+  border-radius: 72% 28% 64% 36% / 52% 32% 68% 48%;
+  background:
+    radial-gradient(circle at 56% 34%, rgba(223, 179, 77, 0.95) 0 7px, transparent 8px),
+    radial-gradient(circle at 50% 58%, rgba(255, 246, 228, 0.22) 0 18px, transparent 19px),
+    linear-gradient(145deg, rgba(200, 139, 39, 0.38), rgba(18, 62, 84, 0.1));
+  box-shadow: inset 0 0 0 9px rgba(36, 22, 15, 0.12);
+}
+
+.motif-paisley::after {
+  position: absolute;
+  inset: 18px 26px 26px 24px;
+  content: "";
+  border: 2px solid rgba(255, 246, 228, 0.28);
+  border-radius: inherit;
+  transform: rotate(-16deg);
+}
+
+.motif-rosette {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(255, 246, 228, 0.92) 0 5px, transparent 6px),
+    repeating-conic-gradient(from 10deg, rgba(223, 179, 77, 0.9) 0 11deg, rgba(125, 37, 29, 0.8) 11deg 22deg, rgba(18, 62, 84, 0.72) 22deg 33deg, transparent 33deg 44deg);
+  filter: drop-shadow(0 10px 22px rgba(36, 22, 15, 0.16));
+}
+
+.motif-a {
+  right: -24px;
+  top: 26px;
+  transform: rotate(20deg);
+}
+
+.motif-b {
+  left: -44px;
+  bottom: 12px;
+  transform: rotate(205deg) scale(0.86);
+}
+
+.motif-c {
+  right: 126px;
+  bottom: 22px;
+  transform: rotate(12deg) scale(0.72);
+}
+
+.motif-d {
+  left: 150px;
+  top: 24px;
+  transform: rotate(38deg) scale(0.52);
+}

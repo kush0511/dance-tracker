@@ -3,23 +3,30 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#7b1f1f">
+    <meta name="theme-color" content="#5a2418">
     <title>Dance Tracker</title>
     <meta
       name="description"
       content="A compact mobile dance tracker powered by a Google Sheet, with inline YouTube playback."
     >
-    <link rel="preload" href="assets/kalamkari-border.jpg" as="image">
+    <link rel="stylesheet" href="motifs.css">
     <link rel="stylesheet" href="styles.css">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
-    <div class="page-shell">
-      <header class="site-header">
+    <div class="page-shell handloom-page">
+      <header class="site-header block-band">
+        <div class="motif-field" aria-hidden="true">
+          <span class="motif-paisley motif-a"></span>
+          <span class="motif-paisley motif-b"></span>
+          <span class="motif-rosette motif-c"></span>
+          <span class="motif-rosette motif-d"></span>
+        </div>
         <div class="text-lockup">
-          <p class="eyebrow">Kalamkari Dance Ledger</p>
+          <p class="eyebrow">Sheet-powered repertoire</p>
           <h1>Dance Tracker</h1>
+          <p class="lede">Songs, steps, and practice clips in one pocket-sized ledger.</p>
         </div>
         <a
           class="edit-link"
@@ -48,11 +55,11 @@
           <div class="list-stats" id="list-stats" aria-live="polite">Loading</div>
         </section>
 
-        <section class="sheet-surface" aria-label="Dance entries">
-          <div class="sheet-head" aria-hidden="true">
-            <span>No.</span>
+        <section class="tracker-surface stamped-panel" aria-label="Dance entries">
+          <div class="tracker-head" aria-hidden="true">
+            <span>Index</span>
             <span>Dance</span>
-            <span>Video</span>
+            <span>Clip</span>
           </div>
           <div id="status" class="status">Loading dances...</div>
           <div id="dance-list" class="dance-list" hidden></div>
