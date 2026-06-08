@@ -54,6 +54,10 @@ body::before {
   opacity: 0.42;
 }
 
+body.player-expanded {
+  overflow: hidden;
+}
+
 button,
 input {
   font: inherit;
@@ -478,46 +482,162 @@ h1 {
   box-shadow: none;
 }
 
-.player-shell {
-  display: grid;
-  grid-template-columns: 38px minmax(0, 1fr);
-  gap: 10px;
-  align-items: center;
-  padding: 0 12px 16px 66px;
+.spotlight {
+  position: relative;
+  z-index: 6;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(226, 180, 103, 0.26);
+  border-radius: 24px;
+  background:
+    linear-gradient(110deg, rgba(255, 255, 255, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(226, 180, 103, 0.14), rgba(255, 255, 255, 0.02)),
+    #080808;
+  box-shadow: var(--shadow);
 }
 
-.player-disc {
-  width: 38px;
-  aspect-ratio: 1;
-  border-radius: 50%;
+.spotlight::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  border-radius: inherit;
   background:
-    radial-gradient(circle, var(--gold) 0 4px, #111 4px 7px, transparent 7px),
-    repeating-radial-gradient(circle, rgba(255, 255, 255, 0.22) 0 1px, transparent 1px 5px),
-    #050505;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.055) 0 1px, transparent 1px 16px),
+    radial-gradient(circle at 88% 6%, rgba(125, 180, 255, 0.18), transparent 18rem);
+  opacity: 0.5;
+}
+
+.spotlight-head {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.spotlight-copy {
+  min-width: 0;
+}
+
+.spotlight-label {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--gold-2);
+  font-size: 0.66rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.spotlight-copy strong {
+  display: block;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 1.02rem;
+  line-height: 1.08;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spotlight-tools {
+  display: flex;
+  gap: 7px;
+}
+
+.spotlight-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 50%;
+  color: var(--text);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)),
+    rgba(5, 5, 5, 0.72);
+  cursor: pointer;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(12px);
+}
+
+.spotlight-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.spotlight-icon:focus-visible {
+  outline: 3px solid rgba(226, 180, 103, 0.32);
+  outline-offset: 2px;
+}
+
+.player-shell {
+  width: 100%;
 }
 
 .video-frame {
   position: relative;
-  overflow: hidden;
   border: 1px solid rgba(226, 180, 103, 0.38);
-  border-radius: 18px;
+  border-radius: 16px;
+  aspect-ratio: 16 / 9;
   background: #000;
-  box-shadow: 0 22px 46px rgba(0, 0, 0, 0.5);
-}
-
-.video-frame::before {
-  display: block;
-  padding-top: 56.25%;
-  content: "";
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 22px 46px rgba(0, 0, 0, 0.5);
 }
 
 .video-frame iframe {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  inset: 1px;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
   border: 0;
+  border-radius: 13px;
+  background: #000;
+}
+
+.spotlight.is-expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: auto;
+  margin: 0;
+  padding: max(14px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  border: 0;
+  border-radius: 0;
+  background:
+    radial-gradient(circle at 88% 0%, rgba(226, 180, 103, 0.18), transparent 18rem),
+    linear-gradient(180deg, #0b0b0c, #020202);
+}
+
+.spotlight.is-expanded::before {
+  border-radius: 0;
+}
+
+.spotlight.is-expanded .spotlight-head {
+  margin-bottom: 10px;
+}
+
+.spotlight.is-expanded .player-shell {
+  display: grid;
+  min-height: 0;
+  place-items: center;
+}
+
+.spotlight.is-expanded .video-frame {
+  width: 100%;
+  height: min(72vh, 100%);
+  height: min(72svh, 100%);
+  max-height: calc(100vh - 104px);
+  max-height: calc(100svh - 104px);
+  aspect-ratio: auto;
+  border-radius: 12px;
+}
+
+.spotlight.is-expanded .video-frame iframe {
+  border-radius: 9px;
 }
 
 @media (min-width: 760px) {
@@ -544,9 +664,67 @@ h1 {
     padding-inline: 18px;
   }
 
-  .player-shell {
-    padding-right: 18px;
-    padding-left: 86px;
+  .spotlight {
+    padding: 16px;
+  }
+
+  .spotlight-head {
+    grid-template-columns: 58px minmax(0, 1fr) auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .spotlight {
+    width: calc(100vw - 6px);
+    margin-left: calc(50% - 50vw + 3px);
+    padding: 8px;
+    border-radius: 18px;
+  }
+
+  .spotlight-head {
+    grid-template-columns: 46px minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .spotlight-copy strong {
+    font-size: 0.98rem;
+  }
+
+  .spotlight-tools {
+    gap: 6px;
+  }
+
+  .spotlight-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .spotlight .player-shell {
+    width: calc(100% + 16px);
+    margin-inline: -8px;
+  }
+
+  .video-frame {
+    height: clamp(232px, 64vw, 292px);
+    aspect-ratio: auto;
+    border-radius: 10px;
+  }
+
+  .video-frame iframe {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 7px;
+  }
+
+  .spotlight.is-expanded {
+    width: auto;
+    margin-left: 0;
+  }
+
+  .spotlight.is-expanded .video-frame {
+    height: min(74vh, calc(100vh - 104px));
+    height: min(74svh, calc(100svh - 104px));
   }
 }
 
@@ -585,21 +763,13 @@ h1 {
   .counter {
     justify-self: start;
   }
-
-  .player-shell {
-    grid-template-columns: minmax(0, 1fr);
-    padding-left: 12px;
-  }
-
-  .player-disc {
-    display: none;
-  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .track,
   .track-action,
   .edit-button,
+  .spotlight-icon,
   .search-field {
     transition:
       transform 180ms ease,
@@ -609,6 +779,7 @@ h1 {
 
   .track-button:hover .track-action,
   .edit-button:hover,
+  .spotlight-icon:hover,
   .search-field:focus-within {
     transform: translateY(-1px);
   }

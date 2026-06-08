@@ -8,6 +8,7 @@ const elements = {
   stats: document.querySelector("#list-stats"),
   status: document.querySelector("#status"),
   editButton: document.querySelector(".edit-button"),
+  spotlight: document.querySelector("#spotlight"),
 };
 
 const state = {
@@ -15,11 +16,15 @@ const state = {
   filtered: [],
   query: "",
   activeId: "",
+  playerExpanded: false,
 };
 
 elements.editButton.href = SHEET_EDIT_URL;
 elements.search.addEventListener("input", onSearch);
 elements.list.addEventListener("click", onTrackClick);
+elements.spotlight.addEventListener("click", onSpotlightClick);
+document.addEventListener("fullscreenchange", onFullscreenChange);
+document.addEventListener("webkitfullscreenchange", onFullscreenChange);
 
 loadDances();
 
@@ -137,8 +142,103 @@ function onTrackClick(event) {
   const dance = state.dances.find((item) => item.id === nextId);
   if (!dance?.videoId) return;
 
-  state.activeId = state.activeId === nextId ? "" : nextId;
+  const isClosing = state.activeId === nextId;
+  state.activeId = isClosing ? "" : nextId;
+  setPlayerExpanded(false, false);
   render();
+
+  if (!isClosing) {
+    window.requestAnimationFrame(() => {
+      elements.spotlight.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+}
+
+function onSpotlightClick(event) {
+  const expandButton = event.target.closest("[data-player-expand]");
+  const closeButton = event.target.closest("[data-player-close]");
+
+  if (expandButton) {
+    togglePlayerFocus();
+    return;
+  }
+
+  if (closeButton) {
+    exitNativeFullscreen();
+    state.activeId = "";
+    setPlayerExpanded(false, false);
+    render();
+  }
+}
+
+async function togglePlayerFocus() {
+  const nextExpanded = !state.playerExpanded;
+  setPlayerExpanded(nextExpanded, true);
+
+  if (!nextExpanded) {
+    await exitNativeFullscreen();
+    return;
+  }
+
+  await requestNativeFullscreen(elements.spotlight);
+}
+
+async function requestNativeFullscreen(element) {
+  const request =
+    element.requestFullscreen ||
+    element.webkitRequestFullscreen ||
+    element.mozRequestFullScreen ||
+    element.msRequestFullscreen;
+
+  if (!request) return;
+
+  try {
+    await request.call(element);
+  } catch {
+    // CSS focus mode remains active when iOS does not expose iframe fullscreen.
+  }
+}
+
+async function exitNativeFullscreen() {
+  const fullscreenElement =
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement;
+  const exit =
+    document.exitFullscreen ||
+    document.webkitExitFullscreen ||
+    document.mozCancelFullScreen ||
+    document.msExitFullscreen;
+
+  if (!fullscreenElement || !exit) return;
+
+  try {
+    await exit.call(document);
+  } catch {
+    // Losing native fullscreen should never block the in-page fallback.
+  }
+}
+
+function onFullscreenChange() {
+  const fullscreenElement =
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement;
+
+  if (!fullscreenElement && state.playerExpanded) {
+    setPlayerExpanded(false, true);
+  }
+}
+
+function setPlayerExpanded(isExpanded, shouldRefresh) {
+  state.playerExpanded = isExpanded;
+  document.body.classList.toggle("player-expanded", isExpanded);
+
+  if (shouldRefresh) {
+    updateSpotlightControls();
+  }
 }
 
 function applyFilter() {
@@ -159,6 +259,7 @@ function applyFilter() {
 function render() {
   elements.status.hidden = true;
   elements.list.hidden = false;
+  renderSpotlight();
 
   if (!state.filtered.length) {
     elements.list.innerHTML = `
@@ -175,6 +276,28 @@ function render() {
   elements.list.innerHTML = state.filtered.map(renderTrack).join("");
   updateStats();
   refreshIcons();
+}
+
+function renderSpotlight() {
+  const dance = state.dances.find((item) => item.id === state.activeId);
+
+  if (!dance?.videoId) {
+    elements.spotlight.hidden = true;
+    elements.spotlight.innerHTML = "";
+    elements.spotlight.dataset.activeId = "";
+    setPlayerExpanded(false, false);
+    return;
+  }
+
+  elements.spotlight.hidden = false;
+  elements.spotlight.classList.toggle("is-expanded", state.playerExpanded);
+
+  if (elements.spotlight.dataset.activeId !== dance.id) {
+    elements.spotlight.dataset.activeId = dance.id;
+    elements.spotlight.innerHTML = renderPlayer(dance);
+  }
+
+  updateSpotlightControls();
 }
 
 function renderTrack(dance) {
@@ -205,7 +328,6 @@ function renderTrack(dance) {
           <i data-lucide="${hasVideo ? (isActive ? "pause" : "play") : "circle-slash"}"></i>
         </span>
       </button>
-      ${isActive ? renderPlayer(dance) : ""}
     </article>
   `;
 }
@@ -215,21 +337,67 @@ function renderPlayer(dance) {
   src.searchParams.set("rel", "0");
   src.searchParams.set("modestbranding", "1");
   src.searchParams.set("playsinline", "1");
+  src.searchParams.set("fs", "1");
 
   return `
+    <div class="spotlight-head">
+      <span class="track-index">${String(dance.number).padStart(2, "0")}</span>
+      <div class="spotlight-copy">
+        <span class="spotlight-label">Now playing</span>
+        <strong>${escapeHtml(dance.title)}</strong>
+      </div>
+      <div class="spotlight-tools">
+        <button
+          class="spotlight-icon"
+          type="button"
+          data-player-expand
+          aria-label="Expand player"
+          title="Expand player"
+        >
+          <i data-lucide="maximize-2" aria-hidden="true"></i>
+        </button>
+        <button
+          class="spotlight-icon"
+          type="button"
+          data-player-close
+          aria-label="Close player"
+          title="Close player"
+        >
+          <i data-lucide="x" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
     <div class="player-shell">
-      <div class="player-disc" aria-hidden="true"></div>
       <div class="video-frame">
         <iframe
           title="${escapeHtml(dance.title)} video"
           src="${src}"
           loading="lazy"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture; web-share"
           allowfullscreen
+          webkitallowfullscreen
+          mozallowfullscreen
         ></iframe>
       </div>
     </div>
   `;
+}
+
+function updateSpotlightControls() {
+  elements.spotlight.classList.toggle("is-expanded", state.playerExpanded);
+
+  const expandButton = elements.spotlight.querySelector("[data-player-expand]");
+  if (!expandButton) return;
+
+  const label = state.playerExpanded ? "Collapse player" : "Expand player";
+  const icon = state.playerExpanded ? "minimize-2" : "maximize-2";
+  expandButton.setAttribute("aria-label", label);
+  expandButton.setAttribute("title", label);
+  if (expandButton.dataset.icon !== icon) {
+    expandButton.dataset.icon = icon;
+    expandButton.innerHTML = `<i data-lucide="${icon}" aria-hidden="true"></i>`;
+  }
+  refreshIcons();
 }
 
 function updateStats() {
