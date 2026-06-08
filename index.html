@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#7b1f1f">
+    <title>Dance Tracker</title>
+    <meta
+      name="description"
+      content="A compact mobile dance tracker powered by a Google Sheet, with inline YouTube playback."
+    >
+    <link rel="preload" href="assets/kalamkari-border.jpg" as="image">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="site-header">
+        <div class="text-lockup">
+          <p class="eyebrow">Kalamkari Dance Ledger</p>
+          <h1>Dance Tracker</h1>
+        </div>
+        <a
+          class="edit-link"
+          href="https://docs.google.com/spreadsheets/d/1GNIUlLSlFTDkhrSnxI1LlMSjP72bmB3ggdLRjviJpFc/edit?usp=sharing"
+          target="_blank"
+          rel="noopener"
+          aria-label="Edit the Google Sheet"
+        >
+          <i data-lucide="pencil" aria-hidden="true"></i>
+          <span>Edit</span>
+        </a>
+      </header>
+
+      <main>
+        <section class="control-panel" aria-label="Dance list controls">
+          <div class="search-wrap">
+            <i data-lucide="search" aria-hidden="true"></i>
+            <input
+              id="dance-search"
+              type="search"
+              autocomplete="off"
+              placeholder="Search dances"
+              aria-label="Search dances"
+            >
+          </div>
+          <div class="list-stats" id="list-stats" aria-live="polite">Loading</div>
+        </section>
+
+        <section class="sheet-surface" aria-label="Dance entries">
+          <div class="sheet-head" aria-hidden="true">
+            <span>No.</span>
+            <span>Dance</span>
+            <span>Video</span>
+          </div>
+          <div id="status" class="status">Loading dances...</div>
+          <div id="dance-list" class="dance-list" hidden></div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
