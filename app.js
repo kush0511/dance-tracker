@@ -7,7 +7,7 @@ const elements = {
   search: document.querySelector("#dance-search"),
   stats: document.querySelector("#list-stats"),
   status: document.querySelector("#status"),
-  editLink: document.querySelector(".edit-link"),
+  editButton: document.querySelector(".edit-button"),
 };
 
 const state = {
@@ -17,46 +17,29 @@ const state = {
   activeId: "",
 };
 
-elements.editLink.href = SHEET_EDIT_URL;
+elements.editButton.href = SHEET_EDIT_URL;
+elements.search.addEventListener("input", onSearch);
+elements.list.addEventListener("click", onTrackClick);
 
 loadDances();
 
-elements.search.addEventListener("input", (event) => {
-  state.query = event.target.value.trim().toLowerCase();
-  applyFilter();
-});
-
-elements.list.addEventListener("click", (event) => {
-  const trigger = event.target.closest("[data-dance-id]");
-  if (!trigger) return;
-
-  const nextId = trigger.dataset.danceId;
-  const dance = state.dances.find((item) => item.id === nextId);
-  if (!dance?.videoId) return;
-
-  state.activeId = state.activeId === nextId ? "" : nextId;
-  renderList();
-});
-
 async function loadDances() {
-  setStatus("Loading dances...");
+  setStatus("Loading the set...");
 
   try {
-    const table = await loadGoogleSheet(SHEET_ID);
-    state.dances = normalizeTable(table);
+    const table = await fetchSheet(SHEET_ID);
+    state.dances = normalizeRows(table);
     applyFilter();
   } catch (error) {
-    setStatus(
-      "Could not read the Google Sheet. Check that link sharing is enabled, then refresh."
-    );
-    elements.stats.textContent = "Offline";
     console.error(error);
+    elements.stats.textContent = "Offline";
+    setStatus("Could not read the Google Sheet. Check sharing settings, then refresh.");
   }
 }
 
-function loadGoogleSheet(sheetId) {
+function fetchSheet(sheetId) {
   return new Promise((resolve, reject) => {
-    const callbackName = `__danceSheet_${Date.now()}_${Math.random()
+    const callbackName = `sheetCallback_${Date.now()}_${Math.random()
       .toString(36)
       .slice(2)}`;
     const timeoutId = window.setTimeout(() => {
@@ -86,7 +69,7 @@ function loadGoogleSheet(sheetId) {
       reject(new Error("Google Sheet request failed."));
     };
 
-    script.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?${params.toString()}`;
+    script.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?${params}`;
     document.head.append(script);
 
     function cleanup() {
@@ -97,97 +80,91 @@ function loadGoogleSheet(sheetId) {
   });
 }
 
-function normalizeTable(table) {
-  const headers = table.cols.map((column, index) => {
-    return column.label || `Column ${index + 1}`;
-  });
-
-  const linkIndex = findHeaderIndex(headers, [
-    "yt",
-    "youtube",
-    "video",
-    "link",
-    "url",
-  ]);
-  const titleIndex = findHeaderIndex(headers, [
-    "song",
-    "dance",
-    "title",
-    "name",
-  ]);
+function normalizeRows(table) {
+  const headers = table.cols.map((column, index) => column.label || `Column ${index + 1}`);
+  const titleIndex = findColumn(headers, ["song", "dance", "routine", "title", "name"]);
+  const linkIndex = findColumn(headers, ["yt", "youtube", "video", "clip", "link", "url"]);
 
   return table.rows
     .map((row, rowIndex) => {
-      const values = headers.map((header, columnIndex) => {
-        const cell = row.c?.[columnIndex];
-        return {
-          header,
-          value: String(cell?.f ?? cell?.v ?? "").trim(),
-        };
-      });
+      const cells = headers.map((header, columnIndex) => ({
+        header,
+        value: String(row.c?.[columnIndex]?.f ?? row.c?.[columnIndex]?.v ?? "").trim(),
+      }));
 
-      const firstTextIndex = values.findIndex((item, index) => {
-        return item.value && index !== linkIndex;
-      });
-      const resolvedTitleIndex = titleIndex >= 0 ? titleIndex : firstTextIndex;
+      const fallbackTitleIndex = cells.findIndex((cell, index) => cell.value && index !== linkIndex);
+      const resolvedTitleIndex = titleIndex >= 0 ? titleIndex : fallbackTitleIndex;
       const resolvedLinkIndex =
-        linkIndex >= 0
-          ? linkIndex
-          : values.findIndex((item) => getYouTubeId(item.value));
+        linkIndex >= 0 ? linkIndex : cells.findIndex((cell) => Boolean(getYouTubeId(cell.value)));
 
       const title =
-        values[resolvedTitleIndex]?.value || `Dance ${String(rowIndex + 1).padStart(2, "0")}`;
-      const url = values[resolvedLinkIndex]?.value || "";
+        cells[resolvedTitleIndex]?.value || `Routine ${String(rowIndex + 1).padStart(2, "0")}`;
+      const url = cells[resolvedLinkIndex]?.value || "";
       const videoId = getYouTubeId(url);
-      const fields = values.filter((item, index) => {
-        return item.value && index !== resolvedTitleIndex && index !== resolvedLinkIndex;
+      const metadata = cells.filter((cell, index) => {
+        return cell.value && index !== resolvedTitleIndex && index !== resolvedLinkIndex;
       });
 
       return {
-        id: `dance-${rowIndex + 1}`,
+        id: `track-${rowIndex + 1}`,
         number: rowIndex + 1,
         title,
         url,
         videoId,
-        fields,
+        metadata,
       };
     })
     .filter((dance) => dance.title || dance.videoId);
 }
 
-function findHeaderIndex(headers, needles) {
+function findColumn(headers, terms) {
   return headers.findIndex((header) => {
     const normalized = header.toLowerCase();
-    return needles.some((needle) => normalized.includes(needle));
+    return terms.some((term) => normalized.includes(term));
   });
 }
 
-function applyFilter() {
-  const query = state.query;
+function onSearch(event) {
+  state.query = event.target.value.trim().toLowerCase();
+  applyFilter();
+}
 
+function onTrackClick(event) {
+  const trigger = event.target.closest("[data-track-id]");
+  if (!trigger) return;
+
+  const nextId = trigger.dataset.trackId;
+  const dance = state.dances.find((item) => item.id === nextId);
+  if (!dance?.videoId) return;
+
+  state.activeId = state.activeId === nextId ? "" : nextId;
+  render();
+}
+
+function applyFilter() {
   state.filtered = state.dances.filter((dance) => {
-    const haystack = [dance.title, dance.url, ...dance.fields.map((field) => field.value)]
+    const searchable = [dance.title, dance.url, ...dance.metadata.map((item) => item.value)]
       .join(" ")
       .toLowerCase();
-    return haystack.includes(query);
+    return searchable.includes(state.query);
   });
 
   if (state.activeId && !state.filtered.some((dance) => dance.id === state.activeId)) {
     state.activeId = "";
   }
 
-  renderList();
+  render();
 }
 
-function renderList() {
+function render() {
   elements.status.hidden = true;
   elements.list.hidden = false;
 
   if (!state.filtered.length) {
     elements.list.innerHTML = `
       <div class="empty-state">
-        <strong>No matching dances</strong>
-        <span>Try a shorter search.</span>
+        <strong>No tracks found</strong>
+        <span>Try another search.</span>
       </div>
     `;
     updateStats();
@@ -195,69 +172,57 @@ function renderList() {
     return;
   }
 
-  elements.list.innerHTML = state.filtered.map(renderDance).join("");
+  elements.list.innerHTML = state.filtered.map(renderTrack).join("");
   updateStats();
   refreshIcons();
 }
 
-function renderDance(dance) {
-  const isActive = dance.id === state.activeId;
+function renderTrack(dance) {
   const hasVideo = Boolean(dance.videoId);
-  const extraFields = dance.fields
-    .map((field) => {
-      return `<span class="field-pill">${escapeHtml(field.header)}: ${escapeHtml(
-        field.value
-      )}</span>`;
-    })
+  const isActive = dance.id === state.activeId;
+  const meta = dance.metadata
+    .map((item) => `<span class="meta-chip">${escapeHtml(item.header)} ${escapeHtml(item.value)}</span>`)
     .join("");
-  const statusChip = hasVideo ? "" : `<span class="row-status">No link yet</span>`;
-  const subline = [statusChip, extraFields].filter(Boolean).join("");
 
   return `
-    <article class="dance-row ${isActive ? "is-active" : ""} ${hasVideo ? "has-video" : "is-empty"}">
+    <article class="track ${isActive ? "is-active" : ""} ${hasVideo ? "has-clip" : "no-clip"}">
       <button
-        class="dance-summary"
+        class="track-button"
         type="button"
-        ${hasVideo ? `data-dance-id="${escapeHtml(dance.id)}"` : ""}
-        aria-expanded="${isActive ? "true" : "false"}"
+        ${hasVideo ? `data-track-id="${escapeHtml(dance.id)}"` : ""}
         ${hasVideo ? "" : "disabled"}
+        aria-expanded="${isActive ? "true" : "false"}"
       >
-        <span class="row-number">${String(dance.number).padStart(2, "0")}</span>
-        <span class="row-copy">
-          <span class="row-title">${escapeHtml(dance.title)}</span>
-          ${subline ? `<span class="row-subline">${subline}</span>` : ""}
+        <span class="track-index">${String(dance.number).padStart(2, "0")}</span>
+        <span class="track-copy">
+          <span class="track-title">${escapeHtml(dance.title)}</span>
+          <span class="track-meta">
+            ${hasVideo ? `<span class="signal">Inline clip</span>` : `<span class="signal muted">No link yet</span>`}
+            ${meta}
+          </span>
         </span>
-        <span class="row-action" aria-hidden="true">
-          <i data-lucide="${hasVideo ? (isActive ? "pause" : "play") : "minus"}"></i>
+        <span class="track-action" aria-hidden="true">
+          <i data-lucide="${hasVideo ? (isActive ? "pause" : "play") : "circle-slash"}"></i>
         </span>
       </button>
-      ${isActive ? renderVideoPanel(dance) : ""}
+      ${isActive ? renderPlayer(dance) : ""}
     </article>
   `;
 }
 
-function renderVideoPanel(dance) {
-  if (!dance.videoId) {
-    return `
-      <div class="video-panel">
-        <div class="video-missing">
-          This row needs a valid YouTube link in the sheet.
-        </div>
-      </div>
-    `;
-  }
-
+function renderPlayer(dance) {
   const src = new URL(`https://www.youtube-nocookie.com/embed/${dance.videoId}`);
   src.searchParams.set("rel", "0");
   src.searchParams.set("modestbranding", "1");
   src.searchParams.set("playsinline", "1");
 
   return `
-    <div class="video-panel">
+    <div class="player-shell">
+      <div class="player-disc" aria-hidden="true"></div>
       <div class="video-frame">
         <iframe
           title="${escapeHtml(dance.title)} video"
-          src="${src.toString()}"
+          src="${src}"
           loading="lazy"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowfullscreen
@@ -268,11 +233,11 @@ function renderVideoPanel(dance) {
 }
 
 function updateStats() {
-  const visible = state.filtered.length;
   const total = state.dances.length;
+  const visible = state.filtered.length;
   const ready = state.filtered.filter((dance) => dance.videoId).length;
   elements.stats.textContent =
-    visible === total ? `${ready}/${total} ready` : `${visible} shown`;
+    visible === total ? `${ready}/${total} clips` : `${visible} shown`;
 }
 
 function setStatus(message) {
@@ -297,12 +262,12 @@ function getYouTubeId(value) {
         return url.searchParams.get("v") || "";
       }
 
-      const embedMatch = url.pathname.match(/\/(?:embed|shorts|live)\/([^/?#]+)/);
-      return embedMatch?.[1] || "";
+      const match = url.pathname.match(/\/(?:embed|shorts|live)\/([^/?#]+)/);
+      return match?.[1] || "";
     }
   } catch {
-    const looseMatch = value.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{6,})/);
-    return looseMatch?.[1] || "";
+    const match = value.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{6,})/);
+    return match?.[1] || "";
   }
 
   return "";

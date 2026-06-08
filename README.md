@@ -1,6 +1,6 @@
 # Dance Tracker
 
-Mobile-first GitHub Pages site for a compact dance list powered by a Google Sheet.
+Mobile-first GitHub Pages site for a chrome-black dance practice deck powered by a Google Sheet.
 
 ## Data Source
 

@@ -3,33 +3,27 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#5a2418">
+    <meta name="theme-color" content="#050505">
     <title>Dance Tracker</title>
     <meta
       name="description"
-      content="A compact mobile dance tracker powered by a Google Sheet, with inline YouTube playback."
+      content="A mobile-first dance practice tracker powered by a Google Sheet, with inline video playback."
     >
-    <link rel="stylesheet" href="motifs.css">
     <link rel="stylesheet" href="styles.css">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
-    <div class="page-shell handloom-page">
-      <header class="site-header block-band">
-        <div class="motif-field" aria-hidden="true">
-          <span class="motif-paisley motif-a"></span>
-          <span class="motif-paisley motif-b"></span>
-          <span class="motif-rosette motif-c"></span>
-          <span class="motif-rosette motif-d"></span>
-        </div>
-        <div class="text-lockup">
-          <p class="eyebrow">Sheet-powered repertoire</p>
+    <div class="stage">
+      <header class="hero" aria-label="Dance Tracker">
+        <div class="hero-copy">
+          <p class="kicker">Sheet-synced practice deck</p>
           <h1>Dance Tracker</h1>
-          <p class="lede">Songs, steps, and practice clips in one pocket-sized ledger.</p>
+          <p class="subtitle">A chrome-black queue for songs, routines, and in-place rehearsal clips.</p>
         </div>
+
         <a
-          class="edit-link"
+          class="edit-button"
           href="https://docs.google.com/spreadsheets/d/1GNIUlLSlFTDkhrSnxI1LlMSjP72bmB3ggdLRjviJpFc/edit?usp=sharing"
           target="_blank"
           rel="noopener"
@@ -38,31 +32,34 @@
           <i data-lucide="pencil" aria-hidden="true"></i>
           <span>Edit</span>
         </a>
+
+        <div class="helmet-mark" aria-hidden="true">
+          <span class="visor"></span>
+        </div>
       </header>
 
-      <main>
-        <section class="control-panel" aria-label="Dance list controls">
-          <div class="search-wrap">
+      <main class="deck">
+        <section class="controls" aria-label="Dance list controls">
+          <label class="search-field" for="dance-search">
             <i data-lucide="search" aria-hidden="true"></i>
             <input
               id="dance-search"
               type="search"
               autocomplete="off"
-              placeholder="Search dances"
-              aria-label="Search dances"
+              placeholder="Search the set"
             >
-          </div>
-          <div class="list-stats" id="list-stats" aria-live="polite">Loading</div>
+          </label>
+          <div class="counter" id="list-stats" aria-live="polite">Loading</div>
         </section>
 
-        <section class="tracker-surface stamped-panel" aria-label="Dance entries">
-          <div class="tracker-head" aria-hidden="true">
-            <span>Index</span>
-            <span>Dance</span>
+        <section class="track-panel" aria-label="Dance entries">
+          <div class="panel-top">
+            <span>Track</span>
+            <span>Routine</span>
             <span>Clip</span>
           </div>
-          <div id="status" class="status">Loading dances...</div>
-          <div id="dance-list" class="dance-list" hidden></div>
+          <div id="status" class="status">Loading the set...</div>
+          <div id="dance-list" class="track-list" hidden></div>
         </section>
       </main>
     </div>
